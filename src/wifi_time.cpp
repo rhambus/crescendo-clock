@@ -1,4 +1,6 @@
 #include "esp_log.h"
+#include <cstring>
+#include <string.h>
 #include <wifi_time.hpp>
 
 static const char *TAG = "wifi_time";

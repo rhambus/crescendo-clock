@@ -21,17 +21,9 @@ void Display::init(void) {
     lcd.setRotation(0);
     lcd.setColorDepth(16);
 
-    // ADC1 config for light sensor
-    adc_oneshot_unit_init_cfg_t init_config1 = {
-        .unit_id = ADC_UNIT_1,
-        .ulp_mode = ADC_ULP_MODE_DISABLE,
-    };
-    ESP_ERROR_CHECK(adc_oneshot_new_unit(&init_config1, &adc1_handle));    
-    adc_oneshot_chan_cfg_t config = {
-        .atten = LIGHT_ADC_ATTEN,
-        .bitwidth = ADC_BITWIDTH_12,
-    };
-    ESP_ERROR_CHECK(adc_oneshot_config_channel(adc1_handle, LIGHT_ADC_CHANNEL, &config));
+    // ADC1 config for light sensor (legacy ADC1 API)
+    ESP_ERROR_CHECK(adc1_config_width(ADC_WIDTH_BIT_12));
+    ESP_ERROR_CHECK(adc1_config_channel_atten((adc1_channel_t)LIGHT_ADC_CHANNEL, LIGHT_ADC_ATTEN));
 
     xTaskCreate(this->monitorBrightnessTask, "monitor_brightness_task", 2048, this, 1, NULL);
     queue = xQueueCreate(1, sizeof(bool));
@@ -256,7 +248,7 @@ void Display::controlBrightness(void) {
     int adc_raw;
     uint16_t ambient_light = 0;
 
-    ESP_ERROR_CHECK(adc_oneshot_read(adc1_handle, LIGHT_ADC_CHANNEL, &adc_raw));
+    adc_raw = adc1_get_raw((adc1_channel_t)LIGHT_ADC_CHANNEL);
     ambient_light = (uint16_t)adc_raw;
 
     if (ambient_light == 0) {

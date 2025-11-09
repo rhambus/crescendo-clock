@@ -2,7 +2,7 @@
 #define _INCLUDE_DISPLAY_HPP
 
 #include "freertos/queue.h"
-#include "esp_adc/adc_oneshot.h"
+#include "driver/adc.h"
 #include "lgfx_ili9341.hpp"
 #include "mqtt_config.hpp"
 
@@ -45,7 +45,7 @@ typedef enum {
 
 class Display {
     LGFX_ILI9341 lcd;
-    adc_oneshot_unit_handle_t adc1_handle;
+    // Using legacy ADC1 API for ESP-IDF 4.x/5.x compatibility
     const uint16_t display_light_thd_down[DISPLAY_BRIGHTNESS_LEVELS_NR] = {24, 25, 60, 100};
     const uint16_t display_light_thd_up[DISPLAY_BRIGHTNESS_LEVELS_NR] = {30, 35, 80, 120};
     const uint8_t display_light_brightness[DISPLAY_BRIGHTNESS_LEVELS_NR + 1] = {0, 1, 10, 50, 100};

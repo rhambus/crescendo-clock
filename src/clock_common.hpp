@@ -4,6 +4,7 @@
 
 #include "freertos/FreeRTOS.h"
 #include "driver/gpio.h"
+#include "driver/uart.h"
 
 #define ROT_ENC_A_GPIO      GPIO_NUM_4
 #define ROT_ENC_B_GPIO      GPIO_NUM_5
@@ -16,7 +17,7 @@
 #define DISPLAY_RST_GPIO    GPIO_NUM_7
 #define DISPLAY_BL_GPIO     GPIO_NUM_6
 
-#define MP3_PLAYER_UART_PORT_NUM     1
+#define MP3_PLAYER_UART_PORT_NUM     ((uart_port_t)UART_NUM_1)
 #define MP3_PLAYER_TX       GPIO_NUM_21
 #define MP3_PLAYER_RX       GPIO_NUM_20
 

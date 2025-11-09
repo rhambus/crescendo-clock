@@ -1,10 +1,10 @@
 #ifndef _INCLUDE_LGFX_ILI9341_HPP
 #define _INCLUDE_LGFX_ILI9341_HPP
 
+#define LGFX_USE_V1
+
 #include <lgfx/v1_init.hpp>
 #include "clock_common.hpp"
-
-#define LGFX_USE_V1
 
 class LGFX_ILI9341 : public lgfx::LGFX_Device
 {
