@@ -6,9 +6,9 @@
 #include "driver/gpio.h"
 #include "driver/uart.h"
 
-#define ROT_ENC_A_GPIO      GPIO_NUM_25
+#define ROT_ENC_A_GPIO      GPIO_NUM_22
 #define ROT_ENC_B_GPIO      GPIO_NUM_27
-#define ROT_ENC_BUTTON_GPIO GPIO_NUM_32
+#define ROT_ENC_BUTTON_GPIO GPIO_NUM_35
 #define ROT_ENC_BUTTON_INVERTED      1
 
 #define DISPLAY_MOSI_GPIO   GPIO_NUM_13
