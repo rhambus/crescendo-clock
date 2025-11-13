@@ -1,4 +1,5 @@
 #include "clock_machine_states.hpp"
+#include "speaker_dac.hpp"
 
 //--------------//
 //  TIME STATE  //
@@ -135,7 +136,9 @@ void AlarmState::enter(ClockMachine* clock) {
     clock->getDisplay()->setMaxBrightness(true);
     alarm_volume = 4;
     crescendo_counter = clock->settings.crescendo_factor;   // To force setting the volume in the next trigger
-    clock->getPlayer()->loopTrack(clock->settings.melody_nr);
+    static SpeakerDAC speaker;
+    speaker.init();
+    speaker.startTestBeep();
     clock->triggerTimer(10);  // Short trigger to avoid copying code that will be in the timerExpired method
     #ifdef MQTT_ACTIVE
     clock->getWifiTime()->sendMQTTAlarmTriggered();
@@ -173,7 +176,8 @@ void AlarmState::encoderRotated(ClockMachine* clock, rotary_encoder_pos_t positi
 }
 
 void AlarmState::exit(ClockMachine* clock) {
-    clock->getPlayer()->stopTrack();
+    static SpeakerDAC speaker;
+    speaker.stopTestBeep();
     clock->getDisplay()->setMaxBrightness(false);
     clock->getDisplay()->updateContent(D_E_ALARM_TIME, &clock->alarm_time, D_A_ON);
 }

@@ -7,7 +7,7 @@
 #include "driver/uart.h"
 
 #define ROT_ENC_A_GPIO      GPIO_NUM_25
-#define ROT_ENC_B_GPIO      GPIO_NUM_26
+#define ROT_ENC_B_GPIO      GPIO_NUM_27
 #define ROT_ENC_BUTTON_GPIO GPIO_NUM_32
 #define ROT_ENC_BUTTON_INVERTED      1
 
@@ -24,6 +24,9 @@
 
 #define LIGHT_ADC_CHANNEL   ADC1_CHANNEL_6  // = GPIO34 on ESP32
 #define LIGHT_ADC_ATTEN     ADC_ATTEN_DB_0
+
+// DAC speaker output (ESP32 internal DAC2)
+#define SPEAKER_DAC_GPIO    GPIO_NUM_26
 
 typedef struct {
     uint8_t hour;

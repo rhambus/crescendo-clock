@@ -2,6 +2,7 @@
 #include "clock_machine.hpp"
 #include "clock_machine_states.hpp"
 #include "esp_log.h"
+// #include "speaker_dac.hpp"
 
 #if __has_include(<wifi_secrets.hpp>)
 #include <wifi_secrets.hpp>
@@ -33,6 +34,8 @@ ClockMachine::ClockMachine(RotaryEncoder* encoder_ref) {
     wifi_time.getTime(&stored_time);
 
     display.init();
+
+    // DAC test beep disabled
 
     if (!audio_player.init(MP3_PLAYER_UART_PORT_NUM, MP3_PLAYER_TX, MP3_PLAYER_RX)) {
         ESP_LOGE(TAG, "There was an error initializing the MP3 player");
