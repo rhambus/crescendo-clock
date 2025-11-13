@@ -1,5 +1,7 @@
 #include "DF_player.hpp"
+#include <audio_config.hpp>
 
+#ifdef DFPLAYER_ACTIVE
 #include "esp_log.h"
 #include "freertos/task.h"
 static const char *TAG = "df_player";
@@ -52,7 +54,7 @@ void DFPlayer::receiveData(uint16_t timeout_ms) {
     number_of_bytes = uart_read_bytes(uart_port_nr, rcvd_buffer, RECEIVE_LENGTH, ticks_to_wait);
     if (number_of_bytes == -1) {
         ;  // If we come to this point, everything goes crazy. This made problems in the past
-        ESP_LOGE(TAG, "Error receiving bytes");
+        ESP_LOGD(TAG, "UART read returned -1 (no data)");
     } else if (number_of_bytes > 0) {
         if (number_of_bytes < RECEIVE_LENGTH) {
             // For some reason, we get a single byte after reset which needs to be ignored
@@ -62,18 +64,18 @@ void DFPlayer::receiveData(uint16_t timeout_ms) {
             if ((rcvd_buffer[POS_START] != DATA_START) || (rcvd_buffer[POS_VERSION] != DATA_VERSION) ||
                 (rcvd_buffer[POS_LENGTH] != DATA_LENGTH) || (rcvd_buffer[POS_END] != DATA_END)) {
                 last_event = DFPLAYER_WRONG_DATA;
-                ESP_LOGE(TAG, "New event: wrong data");
+                ESP_LOGD(TAG, "DFPlayer: wrong data (discarding)");
                 return;
             }
             if (calculateCRC(rcvd_buffer) == (rcvd_buffer[POS_CHECKSUM] << 8) + (rcvd_buffer[POS_CHECKSUM + 1])) {
                 decodeReceiveData(rcvd_buffer);
             } else {
                 last_event = DFPLAYER_WRONG_DATA;
-                ESP_LOGE(TAG, "New event: wrong data");
+                ESP_LOGD(TAG, "DFPlayer: checksum mismatch (discarding)");
             }
         }
     } else {
-        ESP_LOGE(TAG, "Expecting to get some bytes, but nothing there");
+        ESP_LOGD(TAG, "UART read returned 0 bytes");
     }
 }
 
@@ -152,7 +154,7 @@ void DFPlayer::decodeReceiveData(uint8_t *rcvd_buffer) {
             ESP_LOGI(TAG, "New event: response received = %d", parameter);
             break;
         default:
-            ESP_LOGE(TAG, "Unknown event with ID %X", command);
+            ESP_LOGD(TAG, "Unknown DFPlayer event ID 0x%X", command);
             // Something else happened, we just ignore this
             break;
     }
@@ -162,3 +164,5 @@ bool DFPlayer::checkFeedbackValidityFromCommand(uint8_t command) {
     sendData(command);
     return (last_event == DFPLAYER_RESPONSE_RECEIVED);
 }
+
+#endif // DFPLAYER_ACTIVE

@@ -3,6 +3,13 @@
 #include "clock_machine_states.hpp"
 #include "esp_log.h"
 
+#if __has_include(<wifi_secrets.hpp>)
+#include <wifi_secrets.hpp>
+#define WIFI_SECRETS_AVAILABLE 1
+#else
+#define WIFI_SECRETS_AVAILABLE 0
+#endif
+
 static const char *TAG = "clock_machine";
 
 ClockMachine::ClockMachine(RotaryEncoder* encoder_ref) {
@@ -13,6 +20,13 @@ ClockMachine::ClockMachine(RotaryEncoder* encoder_ref) {
         writeNVSDefaultValues();
         ESP_ERROR_CHECK(readNVSValues());
     }
+
+#if WIFI_SECRETS_AVAILABLE
+    // Force override credentials from compile-time secrets and persist to NVS
+    strcpy((char*)wifi_credentials.ssid, WIFI_SSID);
+    strcpy((char*)wifi_credentials.password, WIFI_PASSWORD);
+    saveWifiCredentialsInNVS();
+#endif
 
     // Initialize the wifi + sntp stuff
     wifi_time.init(&wifi_credentials);
@@ -61,8 +75,13 @@ void ClockMachine::writeNVSDefaultValues() {
     // Default some values if values not set in NVS yet
     alarm_time.hour = 7;
     alarm_time.minute = 0;
+    #if WIFI_SECRETS_AVAILABLE
+    strcpy((char*)wifi_credentials.ssid, WIFI_SSID);
+    strcpy((char*)wifi_credentials.password, WIFI_PASSWORD);
+    #else
     strcpy((char*)wifi_credentials.ssid, "Dummy");
     strcpy((char*)wifi_credentials.password, "123456");
+    #endif
 
     saveAlarmTimeInNVS();
     saveWifiCredentialsInNVS();

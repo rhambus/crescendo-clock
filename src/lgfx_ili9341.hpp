@@ -18,7 +18,7 @@ public:
         {
             auto cfg = _bus_instance.config();
 
-            //cfg.spi_host = VSPI_HOST;             // Commented out because of ESP32C3
+            cfg.spi_host = HSPI_HOST;             
             cfg.spi_mode = 0;
             cfg.freq_write = 40000000;              // SPI clock on transmission (up to 80MHz, rounded to 80MHz divided by an integer)
             cfg.freq_read = 16000000;
@@ -35,7 +35,7 @@ public:
 
         {
             auto cfg = _panel_instance.config();
-            cfg.pin_cs = -1;                     // (-1 = disable)
+            cfg.pin_cs = DISPLAY_CS_GPIO;        // (-1 = disable)
             cfg.pin_rst = DISPLAY_RST_GPIO;      // (-1 = disable)
             cfg.pin_busy = -1;                   // (-1 = disable)
 
@@ -60,9 +60,9 @@ public:
             auto cfg = _light_instance.config();
 
             cfg.pin_bl = DISPLAY_BL_GPIO;
-            cfg.invert = false;         // True if you want to invert the brightness of the backlight
-            cfg.freq = 44100;           // Backlight PWM frequency
-            cfg.pwm_channel = 0;
+            cfg.invert = false;         // GPIO21 on this board is typically active-high
+            cfg.freq = 5000;            // Backlight PWM frequency
+            cfg.pwm_channel = 1;
 
             _light_instance.config(cfg);
             _panel_instance.setLight(&_light_instance);

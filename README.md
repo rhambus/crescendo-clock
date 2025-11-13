@@ -62,19 +62,33 @@ The crescendo clock does not subscribe to any MQTT message. Instead, it sends tw
 
 ## Main components
 These are the main electrical components used in this project:
-- [Seeed Studio XIAO ESP32C3 board](https://wiki.seeedstudio.com/XIAO_ESP32C3_Getting_Started/)
+- ESP32-2432S028R module (ESP32-WROOM + 2.8" ILI9341 TFT)
 - [Rotary encoder with board](https://www.ebay.de/itm/173657244984)
 - [2.4 inch display with ILI9341 driver](https://www.waveshare.com/2.4inch-lcd-module.htm)
 - [DFRobot's DFPlayer Mini](https://www.dfrobot.com/product-1121.html)
+  (optional; disabled by default)
+### Optional audio (DFPlayer)
+Audio playback via DFPlayer Mini is optional and disabled by default.
+- To enable, edit `include/audio_config.hpp` and uncomment `#define DFPLAYER_ACTIVE`.
+- When disabled, all audio calls are stubbed and do nothing.
 - [Light sensor](https://www.adafruit.com/product/2748)
 - [Mini-speaker](https://www.ebay.de/itm/313914312809)
 
 See the [detailed description](hardware/README.md) in the hardware folder for more information about schematics, PCB, 3D printed case, detailed assembly instructions and other design considerations.
 
+## ESP32-2432S028R Hardware
+The codebase is configured for the ESP32-2432S028R. Wiring assumed:
+- TFT ILI9341: `SCLK=GPIO14`, `MOSI=GPIO13`, `CS=GPIO15`, `DC=GPIO2`, `RST=GPIO4`, `BL=GPIO21` (PWM, active-high)
+- Rotary encoder: `A=GPIO25`, `B=GPIO26`, `Button=GPIO32` (active low)
+- DFPlayer Mini (optional): UART2 `TX=GPIO17` (to DFPlayer RX), `RX=GPIO16` (from DFPlayer TX)
+- Light sensor (optional): `GPIO34` (ADC1_CHANNEL_6)
+
+Touch and SD-card pins on the module are unused.
+
 ## Compiling and customizing the software
-Basic knowledge about platformio, ESP-IDF development and ESP32 boards is required. This project has been tested only under a Linux environment. In order to compile this project you will need:
-- Your populated PCB board with the ESP32C3 board connected to the PC via USB
-- Visual Studio Code with platformio extension installed and Espressif platform 6.1 installed. Platform updates may cause the code to break, this happened during development several times. If you want to avoid this, set the line `platform = espressif32@=6.1.0` in the file [platformio.ini](platformio.ini)
+Basic knowledge about platformio, ESP-IDF development and ESP32 boards is required. In order to compile this project you will need:
+- ESP32-2432S028R connected to the PC via USB (CP210x/CH340)
+- Visual Studio Code with PlatformIO. The project targets `board = esp32dev` under ESP-IDF.
 
 Just build and upload the code! If you upload to code to the board with no hardware connected to it (display, encoder, etc.) you should at least be able to see some basic debug messages via Serial Monitor related to the failed WiFi connection.
 
@@ -96,4 +110,12 @@ Copyright (c) 2023 javiser
 `crescendo-clock` is distributed under the terms of the MIT License.
 
 See the [LICENSE](LICENSE) for license details.
+
+
+### Wi-Fi Credentials
+- You can provide credentials at compile time in `include/wifi_secrets.hpp`:
+  - `#define WIFI_SSID "your-ssid"`
+  - `#define WIFI_PASSWORD "your-password"`
+- This file is git-ignored by default and used as initial NVS defaults.
+- Without it, use WPS to provision credentials.
 

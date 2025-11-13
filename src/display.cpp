@@ -20,6 +20,7 @@ void Display::init(void) {
     lcd.init();
     lcd.setRotation(0);
     lcd.setColorDepth(16);
+    lcd.setBrightness(255);
 
     // ADC1 config for light sensor (legacy ADC1 API)
     ESP_ERROR_CHECK(adc1_config_width(ADC_WIDTH_BIT_12));
@@ -251,10 +252,7 @@ void Display::controlBrightness(void) {
     adc_raw = adc1_get_raw((adc1_channel_t)LIGHT_ADC_CHANNEL);
     ambient_light = (uint16_t)adc_raw;
 
-    if (ambient_light == 0) {
-        // We could not read the ambient light, we try again in the next iteration
-        return;
-    }
+    // If ambient light cannot be read (e.g., sensor not connected), keep current level
 
     if (max_brightness_requested) {
         setBrightness(DISPLAY_BRIGHTNESS_LEVELS_NR);

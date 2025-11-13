@@ -3,6 +3,7 @@
 
 #include "driver/uart.h"
 #include "freertos/FreeRTOS.h"
+#include <audio_config.hpp>
 
 #define RECEIVE_LENGTH  10
 #define SEND_LENGTH     10
@@ -22,6 +23,7 @@
 #define DATA_FEEDBACK   0x01
 #define DATA_END        0xEF
 
+#ifdef DFPLAYER_ACTIVE
 typedef enum {
     DFPLAYER_NO_EVENT = 0,
     DFPLAYER_ONLINE,
@@ -58,5 +60,26 @@ class DFPlayer {
     bool checkCurrentStatus() { return checkFeedbackValidityFromCommand(0x42); }
     bool checkCurrentFileNumber() { return checkFeedbackValidityFromCommand(0x4C); }
 };
+
+#else // !DFPLAYER_ACTIVE
+
+// Stubbed DFPlayer for builds without audio support
+typedef enum {
+    DFPLAYER_NO_EVENT = 0,
+} dfplayer_event_t;
+
+class DFPlayer {
+   public:
+    bool init(uart_port_t, int, int) { return false; }
+    bool isDeviceOnline() { return false; }
+    void playTrack(int) {}
+    void setVolume(uint8_t) {}
+    void loopTrack(int) {}
+    void stopTrack() {}
+    bool checkCurrentStatus() { return false; }
+    bool checkCurrentFileNumber() { return false; }
+};
+
+#endif // DFPLAYER_ACTIVE
 
 #endif  // _INCLUDE_DF_PLAYER_HPP

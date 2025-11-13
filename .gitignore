@@ -1,3 +1,4 @@
 .pio
 .vscode/*
 sdkconfig.esp32-c3-devkitm-1.old
+include/wifi_secrets.hpp

@@ -48,7 +48,7 @@ class Display {
     // Using legacy ADC1 API for ESP-IDF 4.x/5.x compatibility
     const uint16_t display_light_thd_down[DISPLAY_BRIGHTNESS_LEVELS_NR] = {24, 25, 60, 100};
     const uint16_t display_light_thd_up[DISPLAY_BRIGHTNESS_LEVELS_NR] = {30, 35, 80, 120};
-    const uint8_t display_light_brightness[DISPLAY_BRIGHTNESS_LEVELS_NR + 1] = {0, 1, 10, 50, 100};
+    const uint8_t display_light_brightness[DISPLAY_BRIGHTNESS_LEVELS_NR + 1] = {0, 32, 128, 224, 255};
     uint8_t display_brightness_level = 2;
     bool max_brightness_requested = false;
     bool increased_brightness_requested = false;
