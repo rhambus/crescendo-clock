@@ -7,6 +7,10 @@
 #include <Antonio_Regular26pt7b.h>
 #include <Antonio_Light16pt7b.h>
 
+#if __has_include(<secrets.hpp>)
+#include <secrets.hpp>
+#endif
+
 void Display::monitorBrightnessTask(void *pvParameter) {
     Display *pThis = (Display *)pvParameter;
     bool event;
@@ -32,9 +36,18 @@ void Display::init(void) {
 
 void Display::updateContent(display_element_t element, void *value, display_action_t action) {
     switch (element) {
-        case D_E_TIME:
+        case D_E_TIME: {
             char time_buf[8];
-            sprintf(time_buf, "%02d:%02d", static_cast<clock_time_t *>(value)->hour, static_cast<clock_time_t *>(value)->minute);
+            uint8_t disp_hour = static_cast<clock_time_t *>(value)->hour;
+            uint8_t disp_min = static_cast<clock_time_t *>(value)->minute;
+#ifdef TIME_FORMAT_12H
+            uint8_t hour12 = disp_hour % 12;
+            if (hour12 == 0) hour12 = 12;
+            // No leading zero for 1–9 in 12h mode
+            sprintf(time_buf, "%d:%02d", hour12, disp_min);
+#else
+            sprintf(time_buf, "%02d:%02d", disp_hour, disp_min);
+#endif
             lcd.setTextDatum(top_center);
 
             switch (action) {
@@ -44,12 +57,45 @@ void Display::updateContent(display_element_t element, void *value, display_acti
                 default:
                     break;
             }
-            lcd.drawString(time_buf, (lcd.width() / 2) + 5, 10, &Antonio_SemiBold75pt7b);
-            break;
+            {
+                const int time_center_x = (lcd.width() / 2) + 5;
+                const int time_top_y = 10;
+                lcd.drawString(time_buf, time_center_x, time_top_y, &Antonio_SemiBold75pt7b);
+            }
+#ifdef TIME_FORMAT_12H
+            {
+                const bool is_pm = (disp_hour >= 12);
+                char suffix_buf[2] = { is_pm ? 'p' : 'a', '\0' };
+                // Compute right edge of time to place suffix snugly
+                const int time_center_x = (lcd.width() / 2) + 5;
+                const int time_top_y = 10;
+                int time_w = lcd.textWidth(time_buf, &Antonio_SemiBold75pt7b);
+                int sx = time_center_x + (time_w / 2) + 8; // padding
+                int sy = time_top_y + 6;                  // slight vertical offset
 
-        case D_E_ALARM_TIME:
+                lcd.setTextDatum(top_left);
+                lcd.setTextColor(TFT_WHITE, TFT_BLACK);
+                lcd.setFont(&fonts::Font2);
+                lcd.setTextSize(3, 3);
+                lcd.drawString(suffix_buf, sx, sy);
+                lcd.setTextSize(1, 1);
+            }
+#endif
+            break;
+        }
+
+        case D_E_ALARM_TIME: {
             char alarm_buf[8];
-            sprintf(alarm_buf, "%02d:%02d", static_cast<clock_time_t *>(value)->hour, static_cast<clock_time_t *>(value)->minute);
+            {
+                uint8_t ah = static_cast<clock_time_t *>(value)->hour;
+                uint8_t am = static_cast<clock_time_t *>(value)->minute;
+#ifdef TIME_FORMAT_12H
+                uint8_t hour12 = ah % 12; if (hour12 == 0) hour12 = 12;
+                sprintf(alarm_buf, "%02d:%02d", hour12, am);
+#else
+                sprintf(alarm_buf, "%02d:%02d", ah, am);
+#endif
+            }
             char alarm_symbol_buf[2];
             sprintf(alarm_symbol_buf, DISPLAY_SYMBOL_ALARM_ON);
             lcd.setTextColor(TFT_WHITE, TFT_BLACK);  // Normal case
@@ -71,9 +117,31 @@ void Display::updateContent(display_element_t element, void *value, display_acti
             }
             lcd.drawString(alarm_symbol_buf, 35, 205, &Antonio_Regular26pt7b);
             lcd.drawString(alarm_buf, 100, 200, &Antonio_Regular26pt7b);
+#ifdef TIME_FORMAT_12H
+            if (action != D_A_OFF) {
+                // Append small suffix to alarm time as well, aligned to the right edge
+                lcd.setTextColor((action == D_A_OFF) ? TFT_DARKGRAY : TFT_WHITE, TFT_BLACK);
+                uint8_t ah = static_cast<clock_time_t *>(value)->hour;
+                const bool is_pm = (ah >= 12);
+                char suffix_buf[2] = { is_pm ? 'p' : 'a', '\0' };
+
+                int alarm_w = lcd.textWidth(alarm_buf, &Antonio_Regular26pt7b);
+                int ax_center = 100; // center x used when drawing alarm_buf
+                int sx = ax_center + (alarm_w / 2) + 6; // small padding
+                int sy = 200; // vertically centered with alarm text
+
+                lcd.setTextDatum(middle_left);
+                lcd.setFont(&fonts::Font2);
+                lcd.setTextSize(3, 3);
+                lcd.drawString(suffix_buf, sx, sy);
+                lcd.setTextSize(1, 1);
+            }
+#endif
             break;
 
-        case D_E_BED_TIME:
+        }
+
+        case D_E_BED_TIME: {
             char bed_time_buf[8];
             sprintf(bed_time_buf, "%01d:%02d", static_cast<clock_time_t *>(value)->hour, static_cast<clock_time_t *>(value)->minute);
             char bed_time_symbol_buf[3];
@@ -96,7 +164,9 @@ void Display::updateContent(display_element_t element, void *value, display_acti
             lcd.drawString(bed_time_buf, 235, 200, &Antonio_Regular26pt7b);
             break;
 
-        case D_E_SNOOZE_TIME:
+        }
+
+        case D_E_SNOOZE_TIME: {
             char snooze_buf[8];
             lcd.setTextDatum(middle_center);
             lcd.setTextColor(TFT_ORANGE, TFT_BLACK);
@@ -120,6 +190,8 @@ void Display::updateContent(display_element_t element, void *value, display_acti
             }
             lcd.drawString(snooze_buf, 230, 200, &Antonio_Regular26pt7b);
             break;
+
+        }
 
         default:
             break;
