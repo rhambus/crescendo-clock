@@ -4,11 +4,11 @@
 #include "esp_log.h"
 // #include "speaker_dac.hpp"
 
-#if __has_include(<wifi_secrets.hpp>)
-#include <wifi_secrets.hpp>
-#define WIFI_SECRETS_AVAILABLE 1
+#if __has_include(<secrets.hpp>)
+#include <secrets.hpp>
+#define SECRETS_AVAILABLE 1
 #else
-#define WIFI_SECRETS_AVAILABLE 0
+#define SECRETS_AVAILABLE 0
 #endif
 
 static const char *TAG = "clock_machine";
@@ -22,7 +22,7 @@ ClockMachine::ClockMachine(RotaryEncoder* encoder_ref) {
         ESP_ERROR_CHECK(readNVSValues());
     }
 
-#if WIFI_SECRETS_AVAILABLE
+#if SECRETS_AVAILABLE
     // Force override credentials from compile-time secrets and persist to NVS
     strcpy((char*)wifi_credentials.ssid, WIFI_SSID);
     strcpy((char*)wifi_credentials.password, WIFI_PASSWORD);
@@ -78,7 +78,7 @@ void ClockMachine::writeNVSDefaultValues() {
     // Default some values if values not set in NVS yet
     alarm_time.hour = 7;
     alarm_time.minute = 0;
-    #if WIFI_SECRETS_AVAILABLE
+    #if SECRETS_AVAILABLE
     strcpy((char*)wifi_credentials.ssid, WIFI_SSID);
     strcpy((char*)wifi_credentials.password, WIFI_PASSWORD);
     #else

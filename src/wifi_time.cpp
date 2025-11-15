@@ -3,6 +3,10 @@
 #include <string.h>
 #include <wifi_time.hpp>
 
+#if __has_include(<secrets.hpp>)
+#include <secrets.hpp>
+#endif
+
 static const char *TAG = "wifi_time";
 
 #ifdef MQTT_ACTIVE
@@ -146,8 +150,13 @@ void WifiTime::initSNTP(void) {
     sntp_setservername(0, "pool.ntp.org");
     sntp_set_sync_mode(SNTP_SYNC_MODE_SMOOTH);
     sntp_init();
-    // Timezone Berlin: https://github.com/nayarsystems/posix_tz_db/blob/master/zones.csv
+    // Set timezone. Prefer TIMEZONE_TZ from secrets, else default to Berlin.
+#ifdef TIMEZONE_TZ
+    setenv("TZ", TIMEZONE_TZ, 1);
+#else
+    // Default: Berlin. See https://github.com/nayarsystems/posix_tz_db/blob/master/zones.csv
     setenv("TZ", "CET-1CEST,M3.5.0,M10.5.0/3", 1);
+#endif
     tzset();
 }
 

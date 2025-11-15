@@ -112,10 +112,13 @@ Copyright (c) 2023 javiser
 See the [LICENSE](LICENSE) for license details.
 
 
-### Wi-Fi Credentials
-- You can provide credentials at compile time in `include/wifi_secrets.hpp`:
-  - `#define WIFI_SSID "your-ssid"`
-  - `#define WIFI_PASSWORD "your-password"`
-- This file is git-ignored by default and used as initial NVS defaults.
-- Without it, use WPS to provision credentials.
+### Secrets (Wi‑Fi, TZ, location)
+- Preferred: copy `include/secrets.hpp.example` to `include/secrets.hpp` and edit values.
+- Variables supported now:
+  - `WIFI_SSID`, `WIFI_PASSWORD` (seed NVS on first boot)
+  - `TIMEZONE_TZ` (POSIX TZ string used by SNTP/tzset)
+  - `LOCATION_NAME`, `LOCATION_LAT`, `LOCATION_LON` (for future features)
+  - `OPENWEATHER_API_KEY` (reserved for future weather integration)
+- `include/secrets.hpp` is git-ignored and safe to customize locally.
+  
 
