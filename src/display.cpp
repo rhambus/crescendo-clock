@@ -37,6 +37,9 @@ void Display::init(void) {
 void Display::updateContent(display_element_t element, void *value, display_action_t action) {
     switch (element) {
         case D_E_TIME: {
+            // Clear the time area to avoid ghosting of previous glyphs (GFX fonts have transparent bg)
+            lcd.setColor(TFT_BLACK);
+            lcd.fillRect(0, 0, lcd.width(), 140);
             char time_buf[8];
             uint8_t disp_hour = static_cast<clock_time_t *>(value)->hour;
             uint8_t disp_min = static_cast<clock_time_t *>(value)->minute;
@@ -70,21 +73,23 @@ void Display::updateContent(display_element_t element, void *value, display_acti
                 const int time_center_x = (lcd.width() / 2) + 5;
                 const int time_top_y = 10;
                 int time_w = lcd.textWidth(time_buf, &Antonio_SemiBold75pt7b);
-                int sx = time_center_x + (time_w / 2) + 8; // padding
+                int sx = time_center_x + (time_w / 2) + 3; // 3px padding
                 int sy = time_top_y + 6;                  // slight vertical offset
 
                 lcd.setTextDatum(top_left);
                 lcd.setTextColor(TFT_WHITE, TFT_BLACK);
-                lcd.setFont(&fonts::Font2);
-                lcd.setTextSize(3, 3);
+                // Use a larger built-in font for better readability
+                lcd.setFont(&fonts::Font4);
                 lcd.drawString(suffix_buf, sx, sy);
-                lcd.setTextSize(1, 1);
             }
 #endif
             break;
         }
 
         case D_E_ALARM_TIME: {
+            // Clear the alarm area (left bottom quadrant)
+            lcd.setColor(TFT_BLACK);
+            lcd.fillRect(10, 180, 160, 60);
             char alarm_buf[8];
             {
                 uint8_t ah = static_cast<clock_time_t *>(value)->hour;
@@ -127,14 +132,12 @@ void Display::updateContent(display_element_t element, void *value, display_acti
 
                 int alarm_w = lcd.textWidth(alarm_buf, &Antonio_Regular26pt7b);
                 int ax_center = 100; // center x used when drawing alarm_buf
-                int sx = ax_center + (alarm_w / 2) + 6; // small padding
+                int sx = ax_center + (alarm_w / 2) + 3; // 3px padding
                 int sy = 200; // vertically centered with alarm text
 
                 lcd.setTextDatum(middle_left);
-                lcd.setFont(&fonts::Font2);
-                lcd.setTextSize(3, 3);
+                lcd.setFont(&fonts::Font4);
                 lcd.drawString(suffix_buf, sx, sy);
-                lcd.setTextSize(1, 1);
             }
 #endif
             break;
@@ -142,6 +145,9 @@ void Display::updateContent(display_element_t element, void *value, display_acti
         }
 
         case D_E_BED_TIME: {
+            // Clear the bed-time area (right bottom quadrant)
+            lcd.setColor(TFT_BLACK);
+            lcd.fillRect(170, 180, 140, 60);
             char bed_time_buf[8];
             sprintf(bed_time_buf, "%01d:%02d", static_cast<clock_time_t *>(value)->hour, static_cast<clock_time_t *>(value)->minute);
             char bed_time_symbol_buf[3];
@@ -167,6 +173,9 @@ void Display::updateContent(display_element_t element, void *value, display_acti
         }
 
         case D_E_SNOOZE_TIME: {
+            // Clear the snooze area (overlaps bed-time position)
+            lcd.setColor(TFT_BLACK);
+            lcd.fillRect(160, 180, 160, 60);
             char snooze_buf[8];
             lcd.setTextDatum(middle_center);
             lcd.setTextColor(TFT_ORANGE, TFT_BLACK);
