@@ -2,6 +2,7 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/event_groups.h"
 #include "driver/ledc.h"
+#include "esp_log.h"
 #include <display.hpp>
 #include <Antonio_SemiBold75pt7b.h>
 #include <Antonio_Regular26pt7b.h>
@@ -10,6 +11,8 @@
 #if __has_include(<secrets.hpp>)
 #include <secrets.hpp>
 #endif
+
+static const char *TAG = "display";
 
 void Display::monitorBrightnessTask(void *pvParameter) {
     Display *pThis = (Display *)pvParameter;
@@ -25,6 +28,7 @@ void Display::init(void) {
     lcd.setRotation(0);
     lcd.setColorDepth(16);
     lcd.setBrightness(255);
+    ESP_LOGI(TAG, "LCD initialized, brightness=255");
 
     // ADC1 config for light sensor (legacy ADC1 API)
     ESP_ERROR_CHECK(adc1_config_width(ADC_WIDTH_BIT_12));
@@ -327,31 +331,9 @@ void Display::updateContent(display_element_t element, display_action_t action) 
 }
 
 void Display::controlBrightness(void) {
-    int adc_raw;
-    uint16_t ambient_light = 0;
-
-    adc_raw = adc1_get_raw((adc1_channel_t)LIGHT_ADC_CHANNEL);
-    ambient_light = (uint16_t)adc_raw;
-
-    // If ambient light cannot be read (e.g., sensor not connected), keep current level
-
-    if (max_brightness_requested) {
-        setBrightness(DISPLAY_BRIGHTNESS_LEVELS_NR);
-    } else {
-        // Adjust the brightness level if necessary
-        if ((display_brightness_level > 0) &&
-            (ambient_light < display_light_thd_down[display_brightness_level - 1])) {
-            display_brightness_level--;
-        } else if ((display_brightness_level < DISPLAY_BRIGHTNESS_LEVELS_NR) &&
-                   (ambient_light > display_light_thd_up[display_brightness_level])) {
-            display_brightness_level++;
-        }
-        if (increased_brightness_requested) {
-            setBrightness(display_brightness_level + 1);
-        } else {
-            setBrightness(display_brightness_level);
-        }
-    }
+    // Force full backlight permanently
+    setBrightness(DISPLAY_BRIGHTNESS_LEVELS_NR);
+    ESP_LOGI(TAG, "forced max brightness");
 }
 
 void Display::setBrightness(uint8_t brightness_level) {

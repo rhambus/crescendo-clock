@@ -329,11 +329,25 @@ void SetAlarmState::buttonLongPressed(ClockMachine* clock) {
 
 void SetAlarmState::encoderRotated(ClockMachine* clock, rotary_encoder_pos_t position, rotary_encoder_dir_t direction) {
     if (!setting_minutes) {
-        clock->alarm_time.hour = clock->getEncoder()->getPosition();
+        // Invert rotation effect for hours
+        if (direction == DIR_RIGHT) {
+            // Opposite: decrement hour
+            clock->alarm_time.hour = (clock->alarm_time.hour == 0) ? 23 : (clock->alarm_time.hour - 1);
+        } else if (direction == DIR_LEFT) {
+            // Opposite: increment hour
+            clock->alarm_time.hour = (clock->alarm_time.hour == 23) ? 0 : (clock->alarm_time.hour + 1);
+        }
+        clock->getEncoder()->setPosition(clock->alarm_time.hour);
         hours_hidden = false;
 
     } else {
-        clock->alarm_time.minute = clock->getEncoder()->getPosition();
+        // Invert rotation effect for minutes
+        if (direction == DIR_RIGHT) {
+            clock->alarm_time.minute = (clock->alarm_time.minute == 0) ? 59 : (clock->alarm_time.minute - 1);
+        } else if (direction == DIR_LEFT) {
+            clock->alarm_time.minute = (clock->alarm_time.minute == 59) ? 0 : (clock->alarm_time.minute + 1);
+        }
+        clock->getEncoder()->setPosition(clock->alarm_time.minute);
         minutes_hidden = false;
     }
     clock->getDisplay()->updateContent(D_E_ALARM_TIME, &clock->alarm_time, D_A_ON);
