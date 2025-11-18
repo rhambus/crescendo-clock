@@ -1,4 +1,5 @@
 #include "speaker_dac.hpp"
+#include "esp_timer.h"
 
 static TaskHandle_t s_beep_task = nullptr;
 static volatile bool s_beep_active = false;
@@ -21,16 +22,49 @@ void SpeakerDAC::init() {
 
 void SpeakerDAC::beepTask(void* pvParam) {
     dac_channel_t ch = resolveChannel();
-    const int on_cycles = 100; // ~200ms tone at ~500 Hz
-    const uint8_t amp = 204;   // ~80% volume (255 * 0.8)
+    const uint8_t amp_min = 16;   // start quietly
+    const uint8_t amp_max = 204;  // target ~80% DAC
+    const uint32_t ramp_ms = 60000; // 60 seconds ramp
+    const uint32_t off_ms = 500; // 0.5s pause between tri-tones
+
+    uint32_t start_ms = (uint32_t)(esp_timer_get_time() / 1000);
     while (s_beep_active) {
-        for (int i = 0; i < on_cycles && s_beep_active; ++i) {
-            dac_output_voltage(ch, amp);
-            esp_rom_delay_us(1000);
-            dac_output_voltage(ch, 0);
-            esp_rom_delay_us(1000);
+        // Tri-tone sequence: 1600Hz 500ms, 1200Hz 500ms, 1600Hz 500ms, then 500ms pause
+        const struct { uint16_t freq; uint16_t dur_ms; } seq[] = {
+            {1600, 500}, {1200, 500}, {1600, 500}
+        };
+
+        for (int s = 0; s < 3 && s_beep_active; ++s) {
+            uint32_t seg_start_us = (uint32_t)esp_timer_get_time();
+            uint32_t seg_dur_us = (uint32_t)seq[s].dur_ms * 1000U;
+            // half-period in microseconds for chosen frequency
+            uint32_t half_us = (uint32_t)(500000U / seq[s].freq);
+            if (half_us == 0) half_us = 1;
+
+            while (s_beep_active) {
+                uint32_t now_us = (uint32_t)esp_timer_get_time();
+                if ((now_us - seg_start_us) >= seg_dur_us) break;
+
+                // Update amplitude based on elapsed time since start (linear ramp)
+                uint32_t now_ms = now_us / 1000U;
+                uint32_t elapsed = now_ms - start_ms;
+                uint8_t amp;
+                if (elapsed >= ramp_ms) {
+                    amp = amp_max;
+                } else {
+                    uint32_t delta = (uint32_t)(amp_max - amp_min);
+                    amp = (uint8_t)(amp_min + (delta * elapsed) / ramp_ms);
+                }
+
+                // toggle DAC for one full cycle at current frequency
+                dac_output_voltage(ch, amp);
+                esp_rom_delay_us(half_us);
+                dac_output_voltage(ch, 0);
+                esp_rom_delay_us(half_us);
+            }
         }
-        vTaskDelay(pdMS_TO_TICKS(800)); // ~0.8s silence
+        // pause between tri-tones
+        vTaskDelay(pdMS_TO_TICKS(off_ms));
     }
     dac_output_voltage(ch, 0);
     vTaskDelete(nullptr);

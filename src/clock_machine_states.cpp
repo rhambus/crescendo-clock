@@ -15,7 +15,8 @@ void TimeState::enter(ClockMachine* clock) {
 }
 
 void TimeState::run(ClockMachine* clock) {
-    if (clock->is_alarm_set &&
+    // Trigger alarm only when time ticks into the alarm minute (avoid immediate trigger when enabling at the same time)
+    if (clock->is_alarm_set && clock->time_has_changed &&
         (clock->stored_time.hour == clock->alarm_time.hour) &&
         (clock->stored_time.minute == clock->alarm_time.minute)) {
         clock_time_t bed_time = clock->getTimeToAlarm(clock->stored_time, clock->alarm_time);
@@ -170,6 +171,13 @@ void AlarmState::buttonShortPressed(ClockMachine* clock) {
 }
 
 void AlarmState::buttonLongPressed(ClockMachine* clock) {
+    // Dismiss alarm completely on long press (>1s)
+    clock->is_alarm_set = false;
+    clock->getDisplay()->updateContent(D_E_ALARM_TIME, &clock->alarm_time, D_A_OFF);
+    #ifdef MQTT_ACTIVE
+    clock->getWifiTime()->sendMQTTAlarmStopped();
+    #endif
+    clock->setState(TimeState::getInstance());
 }
 
 void AlarmState::encoderRotated(ClockMachine* clock, rotary_encoder_pos_t position, rotary_encoder_dir_t direction) {
@@ -179,7 +187,9 @@ void AlarmState::exit(ClockMachine* clock) {
     static SpeakerDAC speaker;
     speaker.stopTestBeep();
     clock->getDisplay()->setMaxBrightness(false);
-    clock->getDisplay()->updateContent(D_E_ALARM_TIME, &clock->alarm_time, D_A_ON);
+    // After leaving alarm: show alarm time only if alarm remains set
+    display_action_t action = clock->is_alarm_set ? D_A_ON : D_A_OFF;
+    clock->getDisplay()->updateContent(D_E_ALARM_TIME, &clock->alarm_time, action);
 }
 
 AlarmState::~AlarmState() {}
@@ -228,14 +238,14 @@ void SnoozeState::buttonShortPressed(ClockMachine* clock) {
 }
 
 void SnoozeState::buttonLongPressed(ClockMachine* clock) {
-    if (snooze_leaving_step == SNOOZE_FIRST_ROTATION) {
-        snooze_leaving_step = SNOOZE_LONG_PRESS;
-        clock->getDisplay()->updateContent(D_E_SNOOZE_CANCEL, D_A_TWO_BARS);
-        //Yes! Now a rotation in the other direction!!!
-    }
-    // No matter in what state are we, 3 seconds more light.
-    clock->getDisplay()->setIncreasedBrightness(true);
-    clock->triggerTimer(3000);
+    // Change: long press dismisses snooze immediately (turns alarm off)
+    clock->getDisplay()->updateContent(D_E_SNOOZE_CANCEL, D_A_OFF);
+    clock->is_alarm_set = false;
+    clock->getDisplay()->updateContent(D_E_ALARM_TIME, &clock->alarm_time, D_A_OFF);
+    #ifdef MQTT_ACTIVE
+    clock->getWifiTime()->sendMQTTAlarmStopped();
+    #endif
+    clock->setState(TimeState::getInstance());
 }
 
 void SnoozeState::encoderRotated(ClockMachine* clock, rotary_encoder_pos_t position, rotary_encoder_dir_t direction) {
